@@ -1,4 +1,3 @@
-// index.js
 const express = require("express");
 const app = express();
 const http = require("http");
@@ -16,12 +15,9 @@ const io = new Server(server, {
         methods: ["GET", "POST"],
     },
 });
-
+//process.env.MONGO_URI
 // Conectare la MongoDB
-mongoose.connect("mongodb://localhost:27017/chatdb", {
-    useNewUrlParser: true,
-    useUnifiedTopology: true,
-})
+mongoose.connect("mongodb://localhost:27017/chatdb_docker")
     .then(() => console.log("Connected to MongoDB"))
     .catch((err) => console.error("Error connecting to MongoDB", err));
 
@@ -29,6 +25,7 @@ mongoose.connect("mongodb://localhost:27017/chatdb", {
 const messageSchema = new mongoose.Schema({
     room: { type: String, required: true },
     message: { type: String, required: true },
+    color: { type: String, default: "pink" },
     timestamp: { type: Date, default: Date.now }
 });
 
@@ -52,7 +49,8 @@ io.on("connection", (socket) => {
     socket.on("send_message", async (data) => {
         const newMessage = new Message({
             room: data.room,
-            message: data.message
+            message: data.message,
+            color: data.color // Salvăm culoarea mesajului în baza de date
         });
         try {
             const savedMessage = await newMessage.save();
@@ -76,11 +74,13 @@ io.on("connection", (socket) => {
 
     // Pentru actualizarea unui mesaj
     socket.on("update_message", async (data) => {
-        // data trebuie să conțină: { id: "mesaj_id", room: "room_name", newMessage: "Textul actualizat" }
         try {
             const updatedMessage = await Message.findByIdAndUpdate(
                 data.id,
-                { message: data.newMessage },
+                {
+                    message: data.newMessage,
+                    color: data.color // ✅ adaugă și culoarea în actualizare
+                },
                 { new: true }
             );
             io.in(data.room).emit("message_updated", updatedMessage);
@@ -88,6 +88,7 @@ io.on("connection", (socket) => {
             console.error("Error updating message:", err);
         }
     });
+
 });
 
 server.listen(3001, () => {

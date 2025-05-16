@@ -3,15 +3,14 @@
   "version": "1.0.0",
   "main": "index.js",
   "license": "MIT",
-
   "scripts": {
     "start": "nodemon index.js"
   },
-
   "dependencies": {
     "cors": "^2.8.5",
     "express": "^4.21.2",
     "nodemon": "^3.1.9",
-    "socket.io": "^4.8.1"
+    "socket.io": "^4.8.1",
+    "mongoose": "^8.14.3"
   }
 }

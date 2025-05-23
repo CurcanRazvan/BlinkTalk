@@ -17,21 +17,6 @@ services:
       dockerfile: Dockerfile
     ports:
       - "3001:3001"
-    depends_on:
-      - mongo
     environment:
-      - MONGO_URI=mongodb://mongo:27017/chatdb_docker
+      - MONGO_URI=mongodb+srv://miru_razvan:blinktalk_ipdp@blinktalk.pda51jc.mongodb.net/?retryWrites=true&w=majority&appName=BlinkTalk
     restart: unless-stopped
-
-  mongo:
-    image: mongo:6.0
-    container_name: mongo
-    ports:
-
-      - "27017:27017"
-    volumes:
-      - mongodb_data:/data/db
-    restart: unless-stopped
-
-volumes:
-  mongodb_data:

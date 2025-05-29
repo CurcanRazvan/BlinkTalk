@@ -1,10 +1,11 @@
 const express = require("express");
-const app = express();
 const http = require("http");
 const mongoose = require("mongoose");
 const { Server } = require("socket.io");
 const cors = require("cors");
+require("dotenv").config();
 
+const app = express();
 app.use(cors());
 
 const server = http.createServer(app);
@@ -15,58 +16,74 @@ const io = new Server(server, {
         methods: ["GET", "POST"],
     },
 });
-//process.env.MONGO_URI
-// Conectare la MongoDB
+
+// MongoDB connection
 mongoose.connect(process.env.MONGO_URI, {
     useNewUrlParser: true,
     useUnifiedTopology: true,
 })
     .then(() => console.log("✅ Connected to MongoDB Atlas"))
-    .catch((err) => console.error("❌ Error connecting to MongoDB", err));
+    .catch((err) => console.error("❌ MongoDB connection error:", err));
 
-// Definirea schemei și a modelului pentru mesaje
+// ===========================
+// ======== SCHEMAS =========
+// ===========================
+
+// Notes schema
 const messageSchema = new mongoose.Schema({
     room: { type: String, required: true },
     message: { type: String, required: true },
     color: { type: String, default: "pink" },
     timestamp: { type: Date, default: Date.now }
 });
-
 const Message = mongoose.model("Message", messageSchema);
+
+// Chat schema
+const chatSchema = new mongoose.Schema({
+    room: String,
+    user: String,
+    text: String,
+    timestamp: { type: Date, default: Date.now }
+});
+const Chat = mongoose.model("Chat", chatSchema);
+
+// ===========================
+// ===== SOCKET EVENTS =======
+// ===========================
 
 io.on("connection", (socket) => {
     console.log(`User Connected: ${socket.id}`);
 
-    // Când un utilizator se alătură unei camere, trimitem și mesajele anterioare
     socket.on("join_room", async (room) => {
         socket.join(room);
+
         try {
             const messages = await Message.find({ room }).sort({ timestamp: 1 });
             socket.emit("previous_messages", messages);
         } catch (err) {
             console.error("Error fetching messages:", err);
         }
+
+        socket.on("disconnect", () => {
+            // Fără logică pentru live viewers
+        });
     });
 
-    // Când un mesaj este trimis
     socket.on("send_message", async (data) => {
         const newMessage = new Message({
             room: data.room,
             message: data.message,
-            color: data.color // Salvăm culoarea mesajului în baza de date
+            color: data.color
         });
         try {
-            const savedMessage = await newMessage.save();
-            // Emitem către toți clienții din cameră mesajul salvat
-            io.in(data.room).emit("receive_message", savedMessage);
+            const saved = await newMessage.save();
+            io.in(data.room).emit("receive_message", saved);
         } catch (err) {
             console.error("Error saving message:", err);
         }
     });
 
-    // Pentru ștergerea unui mesaj
     socket.on("delete_message", async (data) => {
-        // data trebuie să conțină: { id: "mesaj_id", room: "room_name" }
         try {
             await Message.findByIdAndDelete(data.id);
             io.in(data.room).emit("message_deleted", { id: data.id });
@@ -75,25 +92,49 @@ io.on("connection", (socket) => {
         }
     });
 
-    // Pentru actualizarea unui mesaj
     socket.on("update_message", async (data) => {
         try {
-            const updatedMessage = await Message.findByIdAndUpdate(
+            const updated = await Message.findByIdAndUpdate(
                 data.id,
-                {
-                    message: data.newMessage,
-                    color: data.color // ✅ adaugă și culoarea în actualizare
-                },
+                { message: data.newMessage, color: data.color },
                 { new: true }
             );
-            io.in(data.room).emit("message_updated", updatedMessage);
+            io.in(data.room).emit("message_updated", updated);
         } catch (err) {
             console.error("Error updating message:", err);
         }
     });
 
+    socket.on("join_chat", async (room) => {
+        socket.join(room);
+        try {
+            const chats = await Chat.find({ room }).sort({ timestamp: 1 });
+            socket.emit("receive_chat_history", chats);
+        } catch (err) {
+            console.error("Error fetching chat history:", err);
+        }
+    });
+
+    socket.on("send_chat", async (data) => {
+        try {
+            const newChat = new Chat(data);
+            const saved = await newChat.save();
+            io.in(data.room).emit("receive_chat", saved);
+        } catch (err) {
+            console.error("Error saving chat:", err);
+        }
+    });
+
+    socket.on("delete_chat", async (data) => {
+        try {
+            await Chat.findByIdAndDelete(data.id);
+            io.in(data.room).emit("chat_deleted", { id: data.id });
+        } catch (err) {
+            console.error("Error deleting chat:", err);
+        }
+    });
 });
 
 server.listen(3001, () => {
-    console.log("SERVER IS RUNNING on port 3001");
+    console.log("🚀 SERVER IS RUNNING on port 3001");
 });

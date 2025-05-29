@@ -2,71 +2,182 @@ body {
   margin: 0;
   font-family: 'Segoe UI', sans-serif;
   background-color: #f7f7f7;
-}
-
-.join-page {
   display: flex;
   justify-content: center;
   align-items: center;
-  height: 100vh;
-}
-
-.join-card {
-  background: white;
-  padding: 40px;
-  border-radius: 16px;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
-  text-align: center;
-  width: 300px;
-}
-
-.join-title {
-  margin-bottom: 20px;
-}
-
-.join-input {
-  width: 100%;
-  padding: 12px;
-  font-size: 16px;
-  margin-bottom: 20px;
-  border-radius: 8px;
-  border: 1px solid #ccc;
-}
-
-.join-button {
-  padding: 12px 24px;
-  font-size: 16px;
-  background-color: #4CAF50;
-  color: white;
-  border: none;
-  border-radius: 8px;
-  cursor: pointer;
-  transition: background-color 0.2s ease;
-}
-
-.join-button:hover {
-  background-color: #45a049;
+  min-height: 100vh;
 }
 
 .chat-page {
+  width: 1600px;
   padding: 20px;
-  max-width: 1200px;
-  margin: auto;
+  background-color: #fff;
+  border-radius: 16px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  min-height: 90vh;
+  overflow-y: auto;
+  margin: 40px auto;
 }
 
-.chat-page h2 {
+.chat-layout {
+  display: grid;
+  grid-template-columns: 2fr 1.3fr;
+  gap: 40px;
+  align-items: flex-start;
+  padding: 20px;
+}
+
+.notes-section {
+  background-color: #fff;
+  border-radius: 16px;
+  padding: 20px;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.notes-header {
+  text-align: center;
   font-size: 24px;
-  margin-bottom: 20px;
-  color: #333;
-  font-weight: 600;
+  margin-bottom: 10px;
 }
 
-.chat-input {
+.message-list-container {
+  flex-grow: 1;
+  max-height: 460px;            /* 🔥 Înălțime vizibilă pentru carduri */
+  overflow-y: auto;             /* 🔥 Scroll doar vertical */
+  overflow-x: hidden;           /* 🔥 Fără scroll lateral */
+}
+
+.message-list-container::-webkit-scrollbar {
+  width: 6px;
+}
+
+.message-list-container::-webkit-scrollbar-thumb {
+  background-color: #888;
+  border-radius: 3px;
+}
+
+.message-list {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 15px;
+}
+
+.message-card {
+  background-color: #f1f1f1;
+  padding: 10px;
+  border-radius: 12px;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  height: 200px;
+  max-height: 200px;
+  overflow: hidden;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.message-card span {
+  flex-grow: 1;
+  overflow-y: auto;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+  word-break: break-word;
+  white-space: pre-wrap;
+  padding-right: 8px;
+  max-height: 150px;
+}
+
+.message-card span::-webkit-scrollbar {
+  width: 4px;
+}
+
+.message-card span::-webkit-scrollbar-thumb {
+  background-color: #bbb;
+  border-radius: 8px;
+}
+
+.message-card span::-webkit-scrollbar-thumb:hover {
+  background-color: #888;
+}
+
+.actions {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 5px;
+  flex-shrink: 0;
+}
+
+.color-picker, .chat-input, .send-button {
+  /* 🔥 Fiecare rămâne fix în partea de jos a secțiunii de notițe */
+}
+
+.livechat-section {
+  background-color: #fff;
+  border-radius: 16px;
+  padding: 20px;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  max-width: 500px;
   width: 100%;
+}
+
+.livechat-section .messages-container {
+  flex: 1;
+  overflow-y: auto;
+  max-height: 500px;
+  padding-right: 10px;
+  background-color: #f9f9f9;
+  border-radius: 8px;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+}
+
+.livechat-section .messages-container::-webkit-scrollbar {
+  width: 6px;
+}
+
+.livechat-section .messages-container::-webkit-scrollbar-thumb {
+  background-color: #888;
+  border-radius: 3px;
+}
+
+.livechat-section .message {
+  background-color: #e6f7ff;
+  padding: 10px 14px;
+  border-radius: 12px;
+  margin-bottom: 10px;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+  word-break: break-word;
+  white-space: pre-wrap;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+textarea.chat-input {
+  width: 98%;
   padding: 10px;
   font-size: 16px;
   resize: none;
-  height: 150px;
+  height: 100px;
+  border-radius: 8px;
+  border: 1px solid #ccc;
+  margin-bottom: 10px;
+}
+
+.edit-input {
+  width: 98%;
+  padding: 10px;
+  font-size: 16px;
+  resize: none;
+  height: 50px;
   border-radius: 8px;
   border: 1px solid #ccc;
   margin-bottom: 10px;
@@ -74,9 +185,8 @@ body {
 
 .color-picker {
   display: flex;
-  flex-wrap: wrap;
   gap: 10px;
-  margin-bottom: 10px;
+  justify-content: center;
 }
 
 .color-option {
@@ -106,124 +216,41 @@ body {
   border-radius: 6px;
   cursor: pointer;
   transition: background-color 0.2s ease;
+  align-self: center;
 }
 
 .send-button:hover {
   background-color: #45a049;
 }
 
-.message-list {
-  margin-top: 30px;
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 15px;
-}
-
-.message-card {
-  background-color: #eee;
-  padding: 15px;
-  border-radius: 10px;
-  min-height: 100px;
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-  transition: transform 0.2s ease;
-}
-
-.message-card:hover {
-  transform: scale(1.02);
-}
-
-.message-card .actions {
-  display: flex;
-  justify-content: space-between;
-  margin-top: 10px;
-}
-
-.message-card .actions button {
-  all: unset;
-  cursor: pointer;
-}
-
-.edit-mode {
-  display: grid;
-  grid-template-columns: 1fr auto;
-  gap: 10px;
-  align-items: center;
-  margin-top: 5px;
-  width: 100%;
-  box-sizing: border-box;
-}
-
-.edit-input {
-  width: 100%;
-  padding: 8px 10px;
-  font-size: 15px;
-  border-radius: 8px;
-  border: 1px solid #aaa;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-  outline: none;
-  transition: border 0.2s;
-  box-sizing: border-box;
-}
-
-.edit-input:focus {
-  border-color: #4CAF50;
-}
-
-.save-button {
-  background-color: #4CAF50;
-  border: none;
-  padding: 8px 10px;
-  border-radius: 8px;
-  cursor: pointer;
-  color: white;
-  transition: background-color 0.2s ease, transform 0.2s ease;
-}
-
-.save-button:hover {
-  background-color: #45a049;
-  transform: scale(1.1);
-}
-
-.icon-button {
-  background: transparent;
-  border: none;
-  cursor: pointer;
-  padding: 5px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: #333;
-  transition: transform 0.2s ease, color 0.2s ease;
-}
-
-.icon-button:hover {
-  color: #000;
-  transform: scale(1.2);
-}
-
-.icon-lg {
-  font-size: 22px;
-}
-
 .home-button {
   background-color: #2196F3;
   color: white;
-  padding: 8px 16px;
-  font-size: 15px;
+  padding: 6px 12px; /* 🔥 Buton mai mic */
+  font-size: 14px;   /* 🔥 Text mai mic */
   border: none;
   border-radius: 6px;
   cursor: pointer;
-  margin-bottom: 15px;
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  transition: background-color 0.2s ease, transform 0.2s ease;
+  position: absolute; /* 🔥 Fixat în stânga sus */
+  top: 20px;
+  left: 20px;
 }
 
 .home-button:hover {
   background-color: #1976D2;
-  transform: scale(1.05);
+}
+
+h2 {
+  font-size: 24px;
+  margin-bottom: 10px;
+  text-align: center;  /* 🔥 Centrează toate h2 */
+}
+
+.icon-button {
+  background: none;
+  border: none;
+  cursor: pointer;
 }

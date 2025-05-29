@@ -7,8 +7,11 @@ function JoinRoomPage() {
     const navigate = useNavigate();
 
     const handleJoin = () => {
-        if (room.trim() !== "") {
-            navigate(`/chat/${room}`);
+        const trimmedRoom = room.trim();
+        if (trimmedRoom.length > 0 && trimmedRoom.length <= 50) {
+            navigate(`/chat/${trimmedRoom}`);
+        } else {
+            alert("Please enter a valid room name (1-50 characters).");
         }
     };
 
@@ -22,9 +25,10 @@ function JoinRoomPage() {
                     className="join-input"
                     value={room}
                     onChange={(e) => setRoom(e.target.value)}
+                    maxLength={50}
                 />
                 <button className="join-button" onClick={handleJoin}>
-                    Enter
+                    Join
                 </button>
             </div>
         </div>

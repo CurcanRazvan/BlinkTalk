@@ -15,29 +15,36 @@ const ChatPage = () => {
     const [color, setColor] = useState("#ffb3b3");
     const [editMessageId, setEditMessageId] = useState(null);
     const [editMessageContent, setEditMessageContent] = useState("");
-    const [dragIndex, setDragIndex] = useState(null);
-
+    const [draggedMessageId, setDraggedMessageId] = useState(null);
     const [chatInput, setChatInput] = useState("");
     const [chatMessages, setChatMessages] = useState([]);
     const [selectedChatIds, setSelectedChatIds] = useState(new Set());
+    const [selectedMessage, setSelectedMessage] = useState(null);
 
     const navigate = useNavigate();
     const noteColors = ["#ffb3b3", "#fff9b3", "#b3cfff", "#c8f7c5", "#ffe0b3", "#e6ccff"];
-
     const chatContainerRef = useRef(null);
 
     useEffect(() => {
         socket.emit("join_room", room);
         socket.emit("join_chat", room);
-
         socket.on("previous_messages", setMessages);
         socket.on("receive_message", (data) => setMessages((prev) => [...prev, data]));
         socket.on("message_deleted", (data) => setMessages((prev) => prev.filter((msg) => msg._id !== data.id)));
         socket.on("message_updated", (data) => setMessages((prev) => prev.map((msg) => msg._id === data._id ? data : msg)));
-
         socket.on("receive_chat_history", setChatMessages);
         socket.on("receive_chat", (msg) => setChatMessages((prev) => [...prev, msg]));
         socket.on("chat_deleted", (data) => setChatMessages((prev) => prev.filter((msg) => msg._id !== data.id)));
+
+        const handleKeyDown = (e) => {
+            if (e.key === "Backspace" && selectedChatIds.size > 0) {
+                selectedChatIds.forEach(id => {
+                    socket.emit("delete_chat", { id, room });
+                });
+                setSelectedChatIds(new Set());
+            }
+        };
+        window.addEventListener("keydown", handleKeyDown);
 
         return () => {
             socket.off("previous_messages");
@@ -47,39 +54,9 @@ const ChatPage = () => {
             socket.off("receive_chat_history");
             socket.off("receive_chat");
             socket.off("chat_deleted");
+            window.removeEventListener("keydown", handleKeyDown);
         };
-    }, [room]);
-
-    useEffect(() => {
-        const handleKeyDown = (e) => {
-            if (e.key === "Backspace" && selectedChatIds.size > 0) {
-                selectedChatIds.forEach((id) => {
-                    socket.emit("delete_chat", { id, room });
-                });
-                setSelectedChatIds(new Set());
-            }
-        };
-        window.addEventListener("keydown", handleKeyDown);
-        return () => window.removeEventListener("keydown", handleKeyDown);
-    }, [selectedChatIds, room]);
-
-    useEffect(() => {
-        if (chatContainerRef.current) {
-            chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight;
-        }
-    }, [chatMessages]);
-
-    const toggleChatSelection = (id) => {
-        setSelectedChatIds(prev => {
-            const updated = new Set(prev);
-            if (updated.has(id)) {
-                updated.delete(id);
-            } else {
-                updated.add(id);
-            }
-            return updated;
-        });
-    };
+    }, [room, selectedChatIds]);
 
     const sendMessage = () => {
         if (message.trim()) {
@@ -99,6 +76,7 @@ const ChatPage = () => {
 
     const deleteMessage = (id) => {
         socket.emit("delete_message", { id, room });
+        if (selectedMessage?._id === id) setSelectedMessage(null);
     };
 
     const sendChat = () => {
@@ -113,14 +91,24 @@ const ChatPage = () => {
         socket.emit("send_message", { room, message: text, color });
     };
 
-    const handleDragStart = (index) => setDragIndex(index);
-    const handleDrop = (index) => {
-        if (dragIndex !== null) {
-            const updated = [...messages];
-            const [moved] = updated.splice(dragIndex, 1);
-            updated.splice(index, 0, moved);
-            setMessages(updated);
-            setDragIndex(null);
+    const toggleChatSelection = (id) => {
+        setSelectedChatIds(prev => {
+            const updated = new Set(prev);
+            updated.has(id) ? updated.delete(id) : updated.add(id);
+            return updated;
+        });
+    };
+
+    const handleDragStart = (id) => setDraggedMessageId(id);
+
+    const handleDrop = (targetId) => {
+        if (draggedMessageId && draggedMessageId !== targetId) {
+            const newMessages = [...messages];
+            const draggedIndex = newMessages.findIndex(m => m._id === draggedMessageId);
+            const targetIndex = newMessages.findIndex(m => m._id === targetId);
+            [newMessages[draggedIndex], newMessages[targetIndex]] = [newMessages[targetIndex], newMessages[draggedIndex]];
+            setMessages(newMessages);
+            setDraggedMessageId(null);
         }
     };
 
@@ -136,21 +124,26 @@ const ChatPage = () => {
                     <h2>Notes</h2>
                     <div className="message-list-container">
                         <div className="message-list">
-                            {messages.map((msg, index) => (
+                            {messages.map((msg) => (
                                 <div key={msg._id} className="message-card"
                                      draggable
-                                     onDragStart={() => handleDragStart(index)}
+                                     onDragStart={() => handleDragStart(msg._id)}
                                      onDragOver={(e) => e.preventDefault()}
-                                     onDrop={() => handleDrop(index)}
-                                     style={{ backgroundColor: msg.color }}>
+                                     onDrop={() => handleDrop(msg._id)}
+                                     style={{ backgroundColor: msg.color }}
+                                     onClick={(e) => e.target.className !== "icon-button" && setSelectedMessage(msg)}
+                                >
                                     {editMessageId === msg._id ? (
                                         <div className="edit-mode">
-                                            <input
+                                            <textarea
                                                 className="edit-input"
                                                 value={editMessageContent}
                                                 onChange={(e) => setEditMessageContent(e.target.value)}
                                             />
-                                            <button className="save-button" onClick={() => updateMessage(msg._id)}>
+                                            <button className="save-button" onClick={(e) => {
+                                                e.stopPropagation(); // ✅ Oprește propagarea
+                                                updateMessage(msg._id);
+                                            }}>
                                                 <i className="fa fa-floppy-o icon-lg"></i>
                                             </button>
                                         </div>
@@ -158,13 +151,17 @@ const ChatPage = () => {
                                         <>
                                             <span>{msg.message}</span>
                                             <div className="actions">
-                                                <button className="icon-button" onClick={() => {
+                                                <button className="icon-button" onClick={(e) => {
+                                                    e.stopPropagation(); // ✅ Oprește propagarea
                                                     setEditMessageId(msg._id);
                                                     setEditMessageContent(msg.message);
                                                 }}>
                                                     <i className="fa fa-pencil icon-lg"></i>
                                                 </button>
-                                                <button className="icon-button" onClick={() => deleteMessage(msg._id)}>
+                                                <button className="icon-button" onClick={(e) => {
+                                                    e.stopPropagation(); // ✅ Oprește propagarea
+                                                    deleteMessage(msg._id);
+                                                }}>
                                                     <i className="fa fa-trash icon-lg"></i>
                                                 </button>
                                             </div>
@@ -174,18 +171,9 @@ const ChatPage = () => {
                             ))}
                         </div>
                     </div>
-                    <textarea
-                        className="chat-input"
-                        placeholder="Write your note or message..."
-                        value={message}
-                        onChange={(e) => setMessage(e.target.value)}
-                        onKeyDown={(e) => {
-                            if (e.key === "Enter" && !e.shiftKey) {
-                                e.preventDefault();
-                                sendMessage();
-                            }
-                        }}
-                    />
+                    <textarea className="chat-input" placeholder="Write your note or message..." value={message}
+                              onChange={(e) => setMessage(e.target.value)}
+                              onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); sendMessage(); } }} />
                     <div className="color-picker">
                         {noteColors.map((c) => (
                             <div key={c} className={`color-option ${color === c ? "selected" : ""}`}
@@ -193,7 +181,7 @@ const ChatPage = () => {
                         ))}
                     </div>
                     <button className="send-button" onClick={sendMessage}>
-                        <i className="fa fa-paper-plane" aria-hidden="true"></i> {/* 🔥 Săgeată de WhatsApp */}
+                        <i className="fa fa-paper-plane"></i>
                     </button>
                 </div>
 
@@ -206,36 +194,33 @@ const ChatPage = () => {
                                  onContextMenu={(e) => handleRightClick(e, c.text)}
                                  onClick={() => toggleChatSelection(c._id)}
                                  className="message"
-                                 title="Right-click to create note, click to select"
                                  style={{
                                      backgroundColor: selectedChatIds.has(c._id) ? 'rgba(100, 181, 246, 0.3)' : undefined,
                                      border: selectedChatIds.has(c._id) ? '1px solid #90caf9' : '1px solid transparent'
-                                 }}>
-                                {c.text}
-                            </div>
+                                 }}>{c.text}</div>
                         ))}
                     </div>
                     <div style={{ display: 'flex', gap: '10px' }}>
-                        <input
-                            type="text"
-                            value={chatInput}
-                            onChange={(e) => setChatInput(e.target.value)}
-                            onKeyDown={(e) => {
-                                if (e.key === "Enter" && !e.shiftKey) {
-                                    e.preventDefault();
-                                    sendChat();
-                                }
-                            }}
-                            placeholder="Type your message..."
-                            className="edit-input"
-                            style={{ flex: 1 }}
-                        />
+                        <input type="text" value={chatInput} onChange={(e) => setChatInput(e.target.value)}
+                               onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); sendChat(); } }}
+                               placeholder="Type your message..." className="edit-input" style={{ flex: 1 }} />
                         <button className="send-button" onClick={sendChat}>
-                            <i className="fa fa-paper-plane" aria-hidden="true"></i>
+                            <i className="fa fa-paper-plane"></i>
                         </button>
                     </div>
                 </div>
             </div>
+
+            {/* Modal for full message */}
+            {selectedMessage && (
+                <div className="modal-overlay" onClick={() => setSelectedMessage(null)}>
+                    <div className="modal-card" onClick={(e) => e.stopPropagation()}>
+                        <h3>Full Message</h3>
+                        <p>{selectedMessage.message}</p>
+                        <button onClick={() => setSelectedMessage(null)} className="send-button">Close</button>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };

@@ -48,9 +48,9 @@ body {
 
 .message-list-container {
   flex-grow: 1;
-  max-height: 460px;            /* 🔥 Înălțime vizibilă pentru carduri */
-  overflow-y: auto;             /* 🔥 Scroll doar vertical */
-  overflow-x: hidden;           /* 🔥 Fără scroll lateral */
+  max-height: 460px;
+  overflow-y: auto;
+  overflow-x: hidden;
 }
 
 .message-list-container::-webkit-scrollbar {
@@ -80,17 +80,16 @@ body {
   max-height: 200px;
   overflow: hidden;
   transition: transform 0.3s ease, box-shadow 0.3s ease;
+  position: relative;
 }
 
 .message-card span {
   flex-grow: 1;
   overflow-y: auto;
+  max-height: calc(100% - 26px);
   word-wrap: break-word;
-  overflow-wrap: break-word;
-  word-break: break-word;
   white-space: pre-wrap;
   padding-right: 8px;
-  max-height: 150px;
 }
 
 .message-card span::-webkit-scrollbar {
@@ -106,15 +105,57 @@ body {
   background-color: #888;
 }
 
+.message-card.dragging {
+  opacity: 0.7;
+  transform: scale(1.05);
+  box-shadow: 0 10px 20px rgba(0,0,0,0.2);
+}
+
+.message-card .edit-mode {
+  display: flex;
+  flex-direction: column;
+  flex-grow: 1;
+  height: 100%;
+}
+
+.message-card .edit-input {
+  flex-grow: 1;
+  width: 100%;
+  padding: 10px;
+  border-radius: 8px;
+  border: 1px solid #ccc;
+  font-size: 14px;
+  resize: none;
+  box-sizing: border-box;
+  font-family: 'Segoe UI', sans-serif;
+  height: 100%;
+}
+
+.message-card .save-button {
+  background-color: #4CAF50;
+  color: white;
+  padding: 6px 10px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 30px;
+  margin-top: 5px;
+  transition: background-color 0.2s ease;
+}
+
+.message-card .save-button:hover {
+  background-color: #45a049;
+}
+
 .actions {
   display: flex;
   justify-content: space-between;
   margin-top: 5px;
   flex-shrink: 0;
-}
-
-.color-picker, .chat-input, .send-button {
-  /* 🔥 Fiecare rămâne fix în partea de jos a secțiunii de notițe */
 }
 
 .livechat-section {
@@ -154,8 +195,6 @@ body {
   border-radius: 12px;
   margin-bottom: 10px;
   word-wrap: break-word;
-  overflow-wrap: break-word;
-  word-break: break-word;
   white-space: pre-wrap;
   max-width: 100%;
   box-sizing: border-box;
@@ -181,6 +220,7 @@ textarea.chat-input {
   border-radius: 8px;
   border: 1px solid #ccc;
   margin-bottom: 10px;
+  font-family: 'Segoe UI', sans-serif;
 }
 
 .color-picker {
@@ -226,15 +266,15 @@ textarea.chat-input {
 .home-button {
   background-color: #2196F3;
   color: white;
-  padding: 6px 12px; /* 🔥 Buton mai mic */
-  font-size: 14px;   /* 🔥 Text mai mic */
+  padding: 6px 12px;
+  font-size: 14px;
   border: none;
   border-radius: 6px;
   cursor: pointer;
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  position: absolute; /* 🔥 Fixat în stânga sus */
+  position: absolute;
   top: 20px;
   left: 20px;
 }
@@ -245,8 +285,10 @@ textarea.chat-input {
 
 h2 {
   font-size: 24px;
-  margin-bottom: 10px;
-  text-align: center;  /* 🔥 Centrează toate h2 */
+  text-align: center;
+  padding-top: 5px;
+  padding-bottom: 5px;
+  margin-bottom: 5px;
 }
 
 .icon-button {
@@ -254,3 +296,85 @@ h2 {
   border: none;
   cursor: pointer;
 }
+
+/* 🔥 Join Room Page */
+.join-page {
+  width: 500px;
+  padding: 20px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.join-card {
+  background-color: #fff;
+  padding: 40px;
+  border-radius: 16px;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.1);
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  align-items: center;
+  width: 500px;
+}
+
+.join-title {
+  font-size: 26px;
+  font-weight: bold;
+  color: #333;
+  margin-bottom: 10px;
+}
+
+.join-input {
+  width: 80%;
+  padding: 12px 16px;
+  font-size: 16px;
+  border-radius: 8px;
+  border: 1px solid #ccc;
+  transition: border 0.3s ease;
+  font-family: 'Segoe UI', sans-serif;
+}
+
+.join-input:focus {
+  border-color: #4CAF50;
+  outline: none;
+}
+
+.join-button {
+  background-color: #4CAF50;
+  color: white;
+  padding: 12px 24px;
+  font-size: 14px;
+  font-weight: bold;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background-color 0.3s ease, transform 0.2s ease;
+}
+
+.join-button:hover {
+  background-color: #45a049;
+  transform: scale(1.05);
+}
+.modal-overlay {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background-color: rgba(0,0,0,0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 999;
+}
+
+.modal-card {
+  background-color: white;
+  padding: 30px;
+  border-radius: 12px;
+  max-width: 600px;
+  width: 90%;
+  max-height: 80%;
+  overflow-y: auto;
+  text-align: center;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.2);
+}
+

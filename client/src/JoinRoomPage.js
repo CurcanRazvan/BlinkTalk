@@ -26,6 +26,11 @@ function JoinRoomPage() {
                     value={room}
                     onChange={(e) => setRoom(e.target.value)}
                     maxLength={50}
+                    onKeyDown={(e) => {
+                        if (e.key === "Enter") {
+                            handleJoin();  // 🔥 Enter trimite direct
+                        }
+                    }}
                 />
                 <button className="join-button" onClick={handleJoin}>
                     Join
